@@ -1,4 +1,4 @@
-from flask import Flask, url_for, request, json
+from flask import Flask, url_for, request, json, Response, jsonify
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
@@ -28,6 +28,17 @@ def api_coffeeshop(shopid):
         return 'Deleting coffeeshop {0}'.format(shopid)
     else:
         return 'method not supported'
+
+@app.errorhandler(404)
+def not_found(error=None):
+    message = {
+            'status': 404, 
+            'message': 'Not Found: {0}'.format(request.url)
+            }
+    response = jsonify(message)
+    response.status_code = 404
+
+    return response
 
 if __name__ == '__main__':
     app.debug = True
