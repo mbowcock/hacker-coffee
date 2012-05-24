@@ -1,4 +1,4 @@
-from flask import Flask, url_for, request
+from flask import Flask, url_for, request, json
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
@@ -15,9 +15,15 @@ def api_coffeeshop(shopid):
     if request.method == 'GET':
         return 'Viewing shop {0}'.format(shopid)
     elif request.method == 'POST':
-        return 'Attempting to change coffeeshop {0}'.format(shopid)
+        if request.headers['Content-Type'] == 'application/json':
+            return 'Attempting to change coffeeshop {0}'.format(shopid)
+        else:
+            return '415 Unsupported media type'
     elif request.method == 'PUT':
-        return 'Attempting to update coffeshop {0}'.format(shopid)
+        if request.headers['Content-Type'] == 'application/json':
+            return 'Attempting to update coffeshop {0}'.format(shopid)
+        else:
+            return '415 Unsupported media type'
     elif request.method == 'DELETE':
         return 'Deleting coffeeshop {0}'.format(shopid)
     else:
