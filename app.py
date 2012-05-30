@@ -16,7 +16,6 @@ def before_request():
 def teardown_request(exception):
     if hasattr(g, 'cur'):
         g.cur.close()
-
     if hasattr(g, 'db'):
         g.db.close()
 
@@ -44,7 +43,9 @@ def api_coffeeshops():
         else:
             return '415 Unsupported media type'
     elif request.method == 'GET':
-        return 'List of coffeeshops'
+        g.cur.execute("select name, address, city, state, zip, description from coffeeshops")
+        rows = [dict((g.cur.description[i][0], value) for i, value in enumerate(row)) for row in g.cur.fetchall()]
+        return json.dumps(rows)
     else:
         return 'Method not supported'
 
