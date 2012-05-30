@@ -1,11 +1,22 @@
 import psycopg2
 import config
-from flask import Flask, url_for, request, json, Response, jsonify
+from flask import Flask, url_for, request, json, Response, jsonify, g
 
 app = Flask(__name__)
 
 def connect_db():
     return psycopg2.connect(database=config.database, user=config.username, password=config.password)
+
+@app.before_request
+def before_request():
+    g.db = connect_db()
+    g.cur = g.db.cursor()
+
+@app.teardown_request
+def teardown_request(exception):
+    if hasattr(g, 'db'):
+        g.cur.close()
+        g.db.close()
 
 @app.route('/', methods=['GET'])
 def api_root():
@@ -17,12 +28,8 @@ def api_coffeeshops():
         if request.headers['Content-Type'] == 'application/json':
             # write post data to database
             data = request.json
-            conn = connect_db()
-            cur = conn.cursor()
-            cur.execute("insert into coffeeshops (name, address, city, state, zip, description) values ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')".format(data["name"], data["address"], data["city"], data["state"], data["zip"], data["description"]))
-            conn.commit()
-            cur.close()
-            conn.close()
+            g.cur.execute("insert into coffeeshops (name, address, city, state, zip, description) values ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')".format(data["name"], data["address"], data["city"], data["state"], data["zip"], data["description"]))
+            g.db.commit()
             return 'coffeeshop added'
         else:
             return '415 Unsupported media type'
