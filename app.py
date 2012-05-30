@@ -45,7 +45,8 @@ def api_coffeeshops():
     elif request.method == 'GET':
         g.cur.execute("select name, address, city, state, zip, description from coffeeshops")
         rows = [dict((g.cur.description[i][0], value) for i, value in enumerate(row)) for row in g.cur.fetchall()]
-        return json.dumps(rows)
+        resp = Response(json.dumps(rows), status=200, mimetype='application/json')
+        return resp
     else:
         return 'Method not supported'
 
