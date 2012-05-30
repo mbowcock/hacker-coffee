@@ -14,8 +14,10 @@ def before_request():
 
 @app.teardown_request
 def teardown_request(exception):
-    if hasattr(g, 'db'):
+    if hasattr(g, 'cur'):
         g.cur.close()
+
+    if hasattr(g, 'db'):
         g.db.close()
 
 @app.route('/', methods=['GET'])
@@ -28,7 +30,15 @@ def api_coffeeshops():
         if request.headers['Content-Type'] == 'application/json':
             # write post data to database
             data = request.json
-            g.cur.execute("insert into coffeeshops (name, address, city, state, zip, description) values ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')".format(data["name"], data["address"], data["city"], data["state"], data["zip"], data["description"]))
+            g.cur.execute(
+                    """insert into coffeeshops (name, address, city, state, zip, description) 
+                    values ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')""".format(
+                        data["name"], 
+                        data["address"], 
+                        data["city"],
+                        data["state"],
+                        data["zip"],
+                        data["description"]))
             g.db.commit()
             return 'coffeeshop added'
         else:
