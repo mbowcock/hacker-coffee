@@ -1,27 +1,43 @@
+import psycopg2
+import config
 from flask import Flask, url_for, request, json, Response, jsonify
+
 app = Flask(__name__)
+
+def connect_db():
+    return psycopg2.connect(database=config.database, user=config.username, password=config.password)
 
 @app.route('/', methods=['GET'])
 def api_root():
     return 'hacker coffee root'
 
-@app.route('/coffeeshops', methods=['GET'])
+@app.route('/coffeeshops', methods=['GET', 'POST'])
 def api_coffeeshops():
-    return 'List of coffeeshops'
+    if request.method == 'POST':
+        if request.headers['Content-Type'] == 'application/json':
+            # write post data to database
+            data = request.json
+            conn = connect_db()
+            cur = conn.cursor()
+            cur.execute("insert into coffeeshops (name, address, city, state, zip, description) values ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')".format(data["name"], data["address"], data["city"], data["state"], data["zip"], data["description"]))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return 'coffeeshop added'
+        else:
+            return '415 Unsupported media type'
+    elif request.method == 'GET':
+        return 'List of coffeeshops'
+    else:
+        return 'Method not supported'
 
-@app.route('/coffeeshops/<shopid>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@app.route('/coffeeshops/<shopid>', methods=['GET', 'POST', 'DELETE'])
 def api_coffeeshop(shopid):
-    print "inside /coffeeshops/..."
     if request.method == 'GET':
         return 'Viewing shop {0}'.format(shopid)
     elif request.method == 'POST':
-        if request.headers['Content-Type'] == 'application/json':
-            return 'Attempting to change coffeeshop {0}'.format(shopid)
-        else:
-            return '415 Unsupported media type'
-    elif request.method == 'PUT':
-        if request.headers['Content-Type'] == 'application/json':
-            return 'Attempting to update coffeshop {0}'.format(shopid)
+        if request.header['Content-Type'] == 'application/json':
+            return 'updating coffeeshop {0}'.format(shopid)
         else:
             return '415 Unsupported media type'
     elif request.method == 'DELETE':
@@ -37,7 +53,6 @@ def not_found(error=None):
             }
     response = jsonify(message)
     response.status_code = 404
-
     return response
 
 if __name__ == '__main__':
